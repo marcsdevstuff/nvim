@@ -11,14 +11,27 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Setup LuaRocks
+-- Setup LuaRocks with Windows paths
 local function setup_luarocks()
-    local home = os.getenv("HOME")
-    local luarocks_path = home .. '/.luarocks/share/lua/5.1/?.lua;' .. home .. '/.luarocks/share/lua/5.1/?/init.lua;'
-    local luarocks_cpath = home .. '/.luarocks/lib/lua/5.1/?.so;'
+    local userprofile = os.getenv("USERPROFILE")
+    if not userprofile then return end  -- Exit if not on Windows
 
-    package.path = package.path .. ';' .. luarocks_path
-    package.cpath = package.cpath .. ';' .. luarocks_cpath
+    -- User-level LuaRocks paths
+    local luarocks_user_path = userprofile .. '\\.luarocks\\share\\lua\\5.1\\?.lua;' ..
+                              userprofile .. '\\.luarocks\\share\\lua\\5.1\\?\\init.lua'
+    local luarocks_user_cpath = userprofile .. '\\.luarocks\\lib\\lua\\5.1\\?.dll'
+
+    -- Add LuaRocks paths to package.path and package.cpath
+    package.path = package.path .. ';' .. luarocks_user_path:gsub('\\', '/')
+    package.cpath = package.cpath .. ';' .. luarocks_user_cpath:gsub('\\', '/')
+
+    -- Add LuaRocks bin directory to PATH for external commands
+    local luarocks_bin = userprofile .. '\\.luarocks\\bin'
+    local current_path = os.getenv("PATH") or ""
+    
+    if not current_path:find(luarocks_bin, 1, true) then
+        os.setenv("PATH", luarocks_bin .. ";" .. current_path)
+    end
 end
 
 -- Initialize LuaRocks paths
@@ -39,6 +52,6 @@ require('lualine').setup()
 -- Set NVIM_LOG_LEVEL to 'debug'
 --vim.fn.setenv("NVIM_LOG_LEVEL", "debug")
 
--- Set verbose to 15 for maximum verbosity and output to ~/.local/share/nvim/log
+-- Set verbose to 15 for maximum verbosity and output to %LOCALAPPDATA%/nvim/log
 --vim.cmd('set verbose=15')
---vim.cmd('set verbosefile=~/.local/share/nvim/log')
+--vim.cmd('set verbosefile=' .. vim.fn.stdpath("data") .. '/log')
