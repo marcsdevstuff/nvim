@@ -41,8 +41,25 @@ local function setup_luarocks()
     end
 end
 
--- Initialize LuaRocks paths
+-- Setup MinGW-w64 paths
+local function setup_mingw()
+    local userprofile = os.getenv("USERPROFILE")
+    if not userprofile then return end
+    
+    -- Define MinGW-w64 installation path
+    local mingw_bin = userprofile .. '\\Apps\\MinGW64\\mingw64\\bin'
+
+    -- Add MinGW-w64 bin to PATH
+    local current_path = vim.fn.getenv("PATH") or ""
+    if not current_path:find(mingw_bin, 1, true) then
+       vim.fn.setenv("PATH", mingw_bin .. ";" .. current_path)
+    end
+end
+
+-- Initialize LuaRocks and MinGW paths
 setup_luarocks()
+setup_mingw()
+
 
 -- Global leader settings
 vim.g.mapleader = ' '
